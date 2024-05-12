@@ -40,11 +40,9 @@ void generate_assembly_increment(FILE* file);
 void generate_assembly_decrement(FILE* file);
 void generate_assembly_output(FILE* file);
 void generate_assembly_input(FILE* file);
-void generate_assembly_jump_forward(FILE* file);
-void generate_assembly_jump_backward(FILE* file);
+void generate_assembly_jump_forward(FILE* file, int label);
+void generate_assembly_jump_backward(FILE* file, int label);
 void generate_assembly(const char* name, struct bf_instructions *instructions);
-void generate_assembly_block(FILE *file, struct bf_instructions *instructions, 
-                             int index);
 
 int main(int argc, const char **argv) {
   struct ap_value *help = ap_value_init(AP_FLAG, "show help", "-h", "--help");
@@ -246,7 +244,42 @@ void generate_assembly(const char* name, struct bf_instructions *instructions) {
   fprintf(file, "\n");
   fprintf(file, "_start:\n");
   
-  // TODO: Implement
+  // main code
+  int label = 0;
+  int top = -1;
+  int stack[instructions->count];
+  for (int i = 0; i < instructions->count; i++) {
+    switch(instructions->items[i]) {
+      case OP_MOVE_RIGHT:
+        generate_assembly_move_right(file);
+        break;
+      case OP_MOVE_LEFT:
+        generate_assembly_move_left(file);
+        break;
+      case OP_INCREMENT:
+        generate_assembly_increment(file);
+        break;
+      case OP_DECREMENT:
+        generate_assembly_decrement(file);
+        break;
+      case OP_OUTPUT:
+        generate_assembly_output(file);
+        break;
+      case OP_INPUT:
+        generate_assembly_input(file);
+        break;
+      case OP_JUMP_FORWARD:
+        stack[++top] = label;
+        generate_assembly_jump_forward(file, label);
+        label++;
+        break;
+      case OP_JUMP_BACKWARD:
+        generate_assembly_jump_backward(file, stack[top--]);
+        break;
+      default:
+        break;
+    }
+  }
 
   // exiting with 0
   fprintf(file, "  mov rax, 60            ; syscall for exit\n");
@@ -262,4 +295,68 @@ void generate_assembly(const char* name, struct bf_instructions *instructions) {
   if (name != NULL) {
     fclose(file);
   }
+}
+
+void generate_assembly_move_right(FILE* file) {
+  fprintf(file, "  inc qword [pointer]    ; increase the pointer\n");
+  fprintf(file, "\n");
+}
+
+void generate_assembly_move_left(FILE* file) {
+  fprintf(file, "  dec qword [pointer]    ; decrease the pointer\n");
+  fprintf(file, "\n");
+}
+
+void generate_assembly_increment(FILE* file) {
+  fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
+  fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
+  fprintf(file, "  inc qword [rax]        ; increase value in the pointer index\n");
+  fprintf(file, "\n");
+}
+
+void generate_assembly_decrement(FILE* file) {
+  fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
+  fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
+  fprintf(file, "  dec qword [rax]        ; decrease value in the pointer index\n");
+  fprintf(file, "\n");
+}
+
+void generate_assembly_output(FILE* file) {
+  fprintf(file, "  mov rax, 1             ; syscall for write\n");
+  fprintf(file, "  mov rdi, 1             ; providing file descriptor as 1(stdout)\n");
+  fprintf(file, "  mov rsi, tape          ; load tape address\n");
+  fprintf(file, "  add rsi, [pointer]     ; go to pointer address\n");
+  fprintf(file, "  mov rdx, 1             ; length of the string (in this case, 1)\n");
+  fprintf(file, "  syscall                ; provoke sys write\n");
+  fprintf(file, "\n");
+}
+
+void generate_assembly_input(FILE* file) {
+  fprintf(file, "  mov rax, 0             ; syscall for read\n");
+  fprintf(file, "  mov rdi, 0             ; providing file descriptor as 0(stdin)\n");
+  fprintf(file, "  mov rsi, tape          ; load tape address\n");
+  fprintf(file, "  add rsi, [pointer]     ; go to pointer address\n");
+  fprintf(file, "  mov rdx, 1             ; length of the string (in this case, 1)\n");
+  fprintf(file, "  syscall                ; provoke sys read\n");
+  fprintf(file, "\n");
+}
+
+void generate_assembly_jump_forward(FILE* file, int label) {
+  fprintf(file, "  mov rax, tape          ; move tape pointer value\n");
+  fprintf(file, "  add rax, [pointer]     ; move to pointer index\n");
+  fprintf(file, "  cmp qword [rax], 0     ; compare current cell to 0\n");
+  fprintf(file, "  je .LB%d\n", label);
+  fprintf(file, "                         ; jump to opening bracket if not equal\n");
+  fprintf(file, ".LF%d:\n", label);
+  fprintf(file, "\n");
+}
+
+void generate_assembly_jump_backward(FILE* file, int label) {
+  fprintf(file, "  mov rax, tape          ; move tape pointer value\n");
+  fprintf(file, "  add rax, [pointer]     ; move to pointer index\n");
+  fprintf(file, "  cmp qword [rax], 0     ; compare current cell to 0\n");
+  fprintf(file, "  jne .LF%d\n", label);
+  fprintf(file, "                         ; jump to opening bracket if not equal\n");
+  fprintf(file, ".LB%d:\n", label);
+  fprintf(file, "\n");
 }
