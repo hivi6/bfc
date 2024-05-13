@@ -34,10 +34,10 @@ int bf_parse(const char *program, struct bf_instructions *instructions);
 int bf_match_brackets(struct bf_instructions *instructions);
 
 // generating assembly stuff
-void generate_assembly_move_right(FILE* file);
-void generate_assembly_move_left(FILE* file);
-void generate_assembly_increment(FILE* file);
-void generate_assembly_decrement(FILE* file);
+void generate_assembly_move_right(FILE* file, int count);
+void generate_assembly_move_left(FILE* file, int count);
+void generate_assembly_increment(FILE* file, int count);
+void generate_assembly_decrement(FILE* file, int count);
 void generate_assembly_output(FILE* file);
 void generate_assembly_input(FILE* file);
 void generate_assembly_jump_forward(FILE* file, int label);
@@ -249,18 +249,39 @@ void generate_assembly(const char* name, struct bf_instructions *instructions) {
   int top = -1;
   int stack[instructions->count];
   for (int i = 0; i < instructions->count; i++) {
+    int count = 0;
     switch(instructions->items[i]) {
       case OP_MOVE_RIGHT:
-        generate_assembly_move_right(file);
+        while (i < instructions->count && instructions->items[i] == OP_MOVE_RIGHT) {
+          count++;
+          i++;
+        }
+        i--;
+        generate_assembly_move_right(file, count);
         break;
       case OP_MOVE_LEFT:
-        generate_assembly_move_left(file);
+        while (i < instructions->count && instructions->items[i] == OP_MOVE_LEFT) {
+          count++;
+          i++;
+        }
+        i--;
+        generate_assembly_move_left(file, count);
         break;
       case OP_INCREMENT:
-        generate_assembly_increment(file);
+        while (i < instructions->count && instructions->items[i] == OP_INCREMENT) {
+          count++;
+          i++;
+        }
+        i--;
+        generate_assembly_increment(file, count);
         break;
       case OP_DECREMENT:
-        generate_assembly_decrement(file);
+        while (i < instructions->count && instructions->items[i] == OP_DECREMENT) {
+          count++;
+          i++;
+        }
+        i--;
+        generate_assembly_decrement(file, count);
         break;
       case OP_OUTPUT:
         generate_assembly_output(file);
@@ -297,27 +318,57 @@ void generate_assembly(const char* name, struct bf_instructions *instructions) {
   }
 }
 
-void generate_assembly_move_right(FILE* file) {
-  fprintf(file, "  inc qword [pointer]    ; increase the pointer\n");
+void generate_assembly_move_right(FILE* file, int count) {
+  if (count == 0) {
+    fprintf(file, "  inc qword [pointer]    ; increase the pointer\n");
+  }
+  else {
+    fprintf(file, "  mov rax, [pointer]     ; increase the pointer by number of count\n");
+    fprintf(file, "  add rax, %d\n", count);
+    fprintf(file, "  mov [pointer], rax\n");
+  }
   fprintf(file, "\n");
 }
 
-void generate_assembly_move_left(FILE* file) {
-  fprintf(file, "  dec qword [pointer]    ; decrease the pointer\n");
+void generate_assembly_move_left(FILE* file, int count) {
+  if (count == 0) {
+    fprintf(file, "  dec qword [pointer]    ; decrease the pointer\n");
+  }
+  else {
+    fprintf(file, "  mov rax, [pointer]     ; decrease the pointer by number of count\n");
+    fprintf(file, "  sub rax, %d\n", count);
+    fprintf(file, "  mov [pointer], rax\n");
+  }
   fprintf(file, "\n");
 }
 
-void generate_assembly_increment(FILE* file) {
-  fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
-  fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
-  fprintf(file, "  inc byte [rax]         ; increase value in the pointer index\n");
+void generate_assembly_increment(FILE* file, int count) {
+  if (count == 0) {
+    fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
+    fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
+    fprintf(file, "  inc byte [rax]         ; increase value in the pointer index\n");
+  }
+  else {
+    fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
+    fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
+    fprintf(file, "  add byte [rax], %d\n", count);
+    fprintf(file, "                         ; increase value in the pointer index by count\n");
+  }
   fprintf(file, "\n");
 }
 
-void generate_assembly_decrement(FILE* file) {
-  fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
-  fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
-  fprintf(file, "  dec byte [rax]         ; decrease value in the pointer index\n");
+void generate_assembly_decrement(FILE* file, int count) {
+  if (count == 0) {
+    fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
+    fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
+    fprintf(file, "  dec byte [rax]         ; decrease value in the pointer index\n");
+  }
+  else {
+    fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
+    fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
+    fprintf(file, "  sub byte [rax], %d\n", count);
+    fprintf(file, "                         ; decrease value in the pointer index by count\n");
+  }
   fprintf(file, "\n");
 }
 
