@@ -289,7 +289,7 @@ void generate_assembly(const char* name, struct bf_instructions *instructions) {
 
   // data section
   fprintf(file, "section .bss\n");
-  fprintf(file, "tape: resq 30000\n");
+  fprintf(file, "tape: resb 30000\n");
   fprintf(file, "pointer: resq 1          ; pointer to current cell\n");
 
   if (name != NULL) {
@@ -310,14 +310,14 @@ void generate_assembly_move_left(FILE* file) {
 void generate_assembly_increment(FILE* file) {
   fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
   fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
-  fprintf(file, "  inc qword [rax]        ; increase value in the pointer index\n");
+  fprintf(file, "  inc byte [rax]         ; increase value in the pointer index\n");
   fprintf(file, "\n");
 }
 
 void generate_assembly_decrement(FILE* file) {
   fprintf(file, "  mov rax, tape          ; get the starting address of the tape\n");
   fprintf(file, "  add rax, [pointer]     ; move to the pointer index\n");
-  fprintf(file, "  dec qword [rax]        ; decrease value in the pointer index\n");
+  fprintf(file, "  dec byte [rax]         ; decrease value in the pointer index\n");
   fprintf(file, "\n");
 }
 
@@ -344,7 +344,7 @@ void generate_assembly_input(FILE* file) {
 void generate_assembly_jump_forward(FILE* file, int label) {
   fprintf(file, "  mov rax, tape          ; move tape pointer value\n");
   fprintf(file, "  add rax, [pointer]     ; move to pointer index\n");
-  fprintf(file, "  cmp qword [rax], 0     ; compare current cell to 0\n");
+  fprintf(file, "  cmp byte [rax], 0      ; compare current cell to 0\n");
   fprintf(file, "  je .LB%d\n", label);
   fprintf(file, "                         ; jump to opening bracket if not equal\n");
   fprintf(file, ".LF%d:\n", label);
@@ -354,7 +354,7 @@ void generate_assembly_jump_forward(FILE* file, int label) {
 void generate_assembly_jump_backward(FILE* file, int label) {
   fprintf(file, "  mov rax, tape          ; move tape pointer value\n");
   fprintf(file, "  add rax, [pointer]     ; move to pointer index\n");
-  fprintf(file, "  cmp qword [rax], 0     ; compare current cell to 0\n");
+  fprintf(file, "  cmp byte [rax], 0      ; compare current cell to 0\n");
   fprintf(file, "  jne .LF%d\n", label);
   fprintf(file, "                         ; jump to opening bracket if not equal\n");
   fprintf(file, ".LB%d:\n", label);
