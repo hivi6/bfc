@@ -20,3 +20,28 @@ There exists a pointer that points to this memory tape.
 .	:= output a character to stdout from memory block(ascii)
 ```
 
+## Building
+
+Run the following commands below, to build the brain fuck compiler
+
+```
+make
+```
+
+Now you can run commands like following
+
+```
+./bfc example/hello.b && ./a.out
+```
+
+To remove the compiler
+
+```
+make clean
+```
+
+## Resources
+
+- https://gist.github.com/roachhd/dce54bec8ba55fb17d3a
+- https://esolangs.org/wiki/Brainfuck
+
