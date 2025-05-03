@@ -1,103 +1,113 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 FILE *OUTPUT;
+void assemble(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	vfprintf(OUTPUT, fmt, args);
+	fprintf(OUTPUT, "\n");
+	va_end(args);
+}
+
 void gen_preamble()
 {
-	fprintf(OUTPUT, ".section .data\n");
-	fprintf(OUTPUT, "tape:\n");
-	fprintf(OUTPUT, "	.zero 30000\n");
-	fprintf(OUTPUT, "pointer:\n");
-	fprintf(OUTPUT, "	.quad 0\n");
-	fprintf(OUTPUT, "\n");
-	fprintf(OUTPUT, ".section .text\n");
-	fprintf(OUTPUT, ".global _start");
-	fprintf(OUTPUT, "\n");
-	fprintf(OUTPUT, "_start:\n");
+	assemble(".section .data");
+	assemble("tape:");
+	assemble("	.zero 30000");
+	assemble("pointer:");
+	assemble("	.quad 0");
+	assemble("");
+	assemble(".section .text");
+	assemble(".global _start");
+	assemble("");
+	assemble("_start:");
 }
 
 void gen_pointer_inc()
 {
-	fprintf(OUTPUT, "	# > : pointer increase\n");
-	fprintf(OUTPUT, "	incq pointer\n");
-	fprintf(OUTPUT, "\n");
+	assemble("	# > : pointer increase");
+	assemble("	incq pointer");
+	assemble("");
 }
 
 void gen_pointer_dec()
 {
-	fprintf(OUTPUT, "	# < : pointer decrease\n");
-	fprintf(OUTPUT, "	decq pointer\n");
-	fprintf(OUTPUT, "\n");
+	assemble("	# < : pointer decrease");
+	assemble("	decq pointer");
+	assemble("");
 }
 
 void gen_value_inc()
 {
-	fprintf(OUTPUT, "	# + : value increase\n");
-	fprintf(OUTPUT, "	mov pointer, %rax\n");
-	fprintf(OUTPUT, "	incb tape(%rax)\n");
-	fprintf(OUTPUT, "\n");
+	assemble("	# + : value increase");
+	assemble("	mov pointer, %rax");
+	assemble("	incb tape(%rax)");
+	assemble("");
 }
 
 void gen_value_dec()
 {
-	fprintf(OUTPUT, "	# - : value decrease\n");
-	fprintf(OUTPUT, "	mov pointer, %rax\n");
-	fprintf(OUTPUT, "	decb tape(%rax)\n");
-	fprintf(OUTPUT, "\n");
+	assemble("	# - : value decrease");
+	assemble("	mov pointer, %rax");
+	assemble("	decb tape(%rax)");
+	assemble("");
 }
 
 void gen_while_start(int label)
 {
-	fprintf(OUTPUT, "	# [ : while start\n");
-	fprintf(OUTPUT, "	movq pointer, %rcx\n");
-	fprintf(OUTPUT, "	movzbq tape(%rcx), %rax\n");
-	fprintf(OUTPUT, "	test %%al, %%al\n");
-	fprintf(OUTPUT, "	je EXIT_%d\n", label);
-	fprintf(OUTPUT, "ENTER_%d:\n", label);
-	fprintf(OUTPUT, "\n");
+	assemble("	# [ : while start");
+	assemble("	movq pointer, %rcx");
+	assemble("	movzbq tape(%rcx), %rax");
+	assemble("	test %%al, %%al");
+	assemble("	je EXIT_%d", label);
+	assemble("ENTER_%d:", label);
+	assemble("");
 }
 
 void gen_while_stop(int label)
 {
-	fprintf(OUTPUT, "	# ] : while stop\n");
-	fprintf(OUTPUT, "	movq pointer, %rcx\n");
-	fprintf(OUTPUT, "	movzbq tape(%rcx), %rax\n");
-	fprintf(OUTPUT, "	test %%al, %%al\n");
-	fprintf(OUTPUT, "	jne ENTER_%d\n", label);
-	fprintf(OUTPUT, "EXIT_%d:\n", label);
-	fprintf(OUTPUT, "\n");
+	assemble("	# ] : while stop");
+	assemble("	movq pointer, %rcx");
+	assemble("	movzbq tape(%rcx), %rax");
+	assemble("	test %%al, %%al");
+	assemble("	jne ENTER_%d", label);
+	assemble("EXIT_%d:", label);
+	assemble("");
 }
 
 void gen_read()
 {
-	fprintf(OUTPUT, "	# , : read a character\n");
-	fprintf(OUTPUT, "	movq pointer, %rcx\n");
-	fprintf(OUTPUT, "	lea tape(%rcx), %rsi\n");
-	fprintf(OUTPUT, "	mov $0, %rdi\n");
-	fprintf(OUTPUT, "	mov $1, %rdx\n");
-	fprintf(OUTPUT, "	mov $0, %rax\n");
-	fprintf(OUTPUT, "	syscall\n");
-	fprintf(OUTPUT, "\n");
+	assemble("	# , : read a character");
+	assemble("	movq pointer, %rcx");
+	assemble("	lea tape(%rcx), %rsi");
+	assemble("	mov $0, %rdi");
+	assemble("	mov $1, %rdx");
+	assemble("	mov $0, %rax");
+	assemble("	syscall");
+	assemble("");
 }
 
 void gen_write()
 {
-	fprintf(OUTPUT, "	# . : write a character\n");
-	fprintf(OUTPUT, "	movq pointer, %rcx\n");
-	fprintf(OUTPUT, "	lea tape(%rcx), %rsi\n");
-	fprintf(OUTPUT, "	mov $1, %rdi\n");
-	fprintf(OUTPUT, "	mov $1, %rdx\n");
-	fprintf(OUTPUT, "	mov $1, %rax\n");
-	fprintf(OUTPUT, "	syscall\n");
-	fprintf(OUTPUT, "\n");
+	assemble("	# . : write a character");
+	assemble("	movq pointer, %rcx");
+	assemble("	lea tape(%rcx), %rsi");
+	assemble("	mov $1, %rdi");
+	assemble("	mov $1, %rdx");
+	assemble("	mov $1, %rax");
+	assemble("	syscall");
+	assemble("");
 }
 
 void gen_epilogue()
 {
-	fprintf(OUTPUT, "	mov $60, %rax\n");
-	fprintf(OUTPUT, "	xor %rdi, %rdi\n");
-	fprintf(OUTPUT, "	syscall\n");
+	assemble("	mov $60, %rax");
+	assemble("	xor %rdi, %rdi");
+	assemble("	syscall");
 }
 
 int POINTER = 0;
