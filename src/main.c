@@ -3,112 +3,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-FILE *OUTPUT;
-void assemble(const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	vfprintf(OUTPUT, fmt, args);
-	fprintf(OUTPUT, "\n");
-	va_end(args);
-}
-
-void gen_preamble()
-{
-	assemble(".section .data");
-	assemble("tape:");
-	assemble("	.zero 30000");
-	assemble("pointer:");
-	assemble("	.quad 0");
-	assemble("");
-	assemble(".section .text");
-	assemble(".global _start");
-	assemble("");
-	assemble("_start:");
-}
-
-void gen_pointer_inc()
-{
-	assemble("	# > : pointer increase");
-	assemble("	incq pointer");
-	assemble("");
-}
-
-void gen_pointer_dec()
-{
-	assemble("	# < : pointer decrease");
-	assemble("	decq pointer");
-	assemble("");
-}
-
-void gen_value_inc()
-{
-	assemble("	# + : value increase");
-	assemble("	mov pointer, %rax");
-	assemble("	incb tape(%rax)");
-	assemble("");
-}
-
-void gen_value_dec()
-{
-	assemble("	# - : value decrease");
-	assemble("	mov pointer, %rax");
-	assemble("	decb tape(%rax)");
-	assemble("");
-}
-
-void gen_while_start(int label)
-{
-	assemble("	# [ : while start");
-	assemble("	movq pointer, %rcx");
-	assemble("	movzbq tape(%rcx), %rax");
-	assemble("	test %%al, %%al");
-	assemble("	je EXIT_%d", label);
-	assemble("ENTER_%d:", label);
-	assemble("");
-}
-
-void gen_while_stop(int label)
-{
-	assemble("	# ] : while stop");
-	assemble("	movq pointer, %rcx");
-	assemble("	movzbq tape(%rcx), %rax");
-	assemble("	test %%al, %%al");
-	assemble("	jne ENTER_%d", label);
-	assemble("EXIT_%d:", label);
-	assemble("");
-}
-
-void gen_read()
-{
-	assemble("	# , : read a character");
-	assemble("	movq pointer, %rcx");
-	assemble("	lea tape(%rcx), %rsi");
-	assemble("	mov $0, %rdi");
-	assemble("	mov $1, %rdx");
-	assemble("	mov $0, %rax");
-	assemble("	syscall");
-	assemble("");
-}
-
-void gen_write()
-{
-	assemble("	# . : write a character");
-	assemble("	movq pointer, %rcx");
-	assemble("	lea tape(%rcx), %rsi");
-	assemble("	mov $1, %rdi");
-	assemble("	mov $1, %rdx");
-	assemble("	mov $1, %rax");
-	assemble("	syscall");
-	assemble("");
-}
-
-void gen_epilogue()
-{
-	assemble("	mov $60, %rax");
-	assemble("	xor %rdi, %rdi");
-	assemble("	syscall");
-}
+#include "gen.h"
+#include "utils.h"
 
 int POINTER = 0;
 int LABEL = 0;
@@ -208,11 +104,12 @@ int main(int argc, char **argv)
 	fclose(fd);
 
 	// generate the assembly
-	OUTPUT = fopen("/tmp/bfc.s", "w");
+	fd = fopen("/tmp/bfc.s", "w");
+	load_assembly_file(fd);
 	gen_preamble();
 	gen_asm(program);
 	gen_epilogue();
-	fclose(OUTPUT);
+	fclose(fd);
 
 	free(program);
 
