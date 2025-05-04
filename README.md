@@ -31,13 +31,13 @@ make
 Now you can run commands like following
 
 ```
-./bfc example/hello.b && ./a.out
+./bfc examples/hello.b && ./a.out
 ```
 
 or
 
 ```
-./bfc -o hello example/hello.b && ./hello
+./bfc -o hello examples/hello.b && ./hello
 ```
 
 To remove the compiler
