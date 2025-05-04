@@ -6,6 +6,16 @@
 #include "gen.h"
 #include "utils.h"
 
+/**
+ * about:
+ *		generate assembly for each token in the program
+ *		uses the gen.h functions to generate the assembly
+ *		the assembly is generated to the loaded assembly file
+ *		using the load_assembly_file
+ *
+ * arguments:
+ *		char *program		the program text
+ */
 int POINTER = 0;
 int LABEL = 0;
 void gen_asm(const char *program)
@@ -52,12 +62,14 @@ void gen_asm(const char *program)
 
 int main(int argc, char **argv)
 {
+	// Check if the program file is provided
 	if (argc <= 1)
 	{
 		fprintf(stderr, "Error: no program file provided\n");
 		exit(1);
 	}
 
+	// Check for any custom output file path
 	char *output_file = "a.out";
 	for (int i = 1; i < argc - 1; i++)
 	{
@@ -88,6 +100,8 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	// First check the length of the file and create an array
+	// of the given length and then
 	// Read the content of the program to a character array
 	fseek(fd, 0, SEEK_END);
 	long fd_size = ftell(fd);
