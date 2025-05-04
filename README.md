@@ -34,6 +34,12 @@ Now you can run commands like following
 ./bfc example/hello.b && ./a.out
 ```
 
+or
+
+```
+./bfc -o hello example/hello.b && ./hello
+```
+
 To remove the compiler
 
 ```
